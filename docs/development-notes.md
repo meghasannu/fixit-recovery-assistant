@@ -179,3 +179,17 @@ must still pass.
 - **Checked:** 51 tests pass (2 new page tests); scripted browser walk-through
   of shortcuts, copy, accept, summary and log download (log contains no text);
   desktop and phone-width screenshots.
+
+## Stage 8: report figures
+
+- **Built:** system diagram (`docs/system-diagram.png`) laid out on the
+  module's conceptual spine, with implemented, simulated and planned parts
+  marked and the empty layers named; three storyboards
+  (`docs/storyboards/`) following the five-frame method, each frame marked
+  with who acts, which gulf and which signifier.
+- **Change: a scripted mock answer for one own-words correction.** In mock
+  mode, storyboard 3's own-words frame showed a placeholder; a scripted answer
+  for that demo correction (clearly mock) now shows the interaction properly.
+  1 new test (52 in total).
+- **README completed** to the brief: status, stack, running, development
+  record, AI assistance, additional files and prose word count.

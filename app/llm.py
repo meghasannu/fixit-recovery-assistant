@@ -11,7 +11,7 @@ import time
 
 from . import config
 from .checks import _content_words, _stem
-from .mock_data import AUTOFIX, CANNED_REVISIONS, find_sample
+from .mock_data import AUTOFIX, CANNED_CORRECTIONS, CANNED_REVISIONS, find_sample
 
 
 class LLMError(Exception):
@@ -85,6 +85,9 @@ class MockClient:
                 # of inventing it (sycophancy, L08).
                 return (f"{current}\n\nYour text does not mention "
                         f"{', '.join(absent)}, so FixIt has not added it.")
+            scripted = CANNED_CORRECTIONS.get(sample["id"]) if sample else None
+            if scripted and all(k in correction.lower() for k in scripted["keywords"]):
+                return scripted["output"]
             text = (f"{current} (A mock answer would apply your correction "
                     f"here: \"{correction}\".)")
         return f"[Mock response] {text}".strip()

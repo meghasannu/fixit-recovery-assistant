@@ -21,25 +21,25 @@ CALL_TIMEOUT = 90_000  # ms; live model calls can be slow when busy
 
 async def shot(page, name: str, selectors: list[str], pad: int = 12):
     """Screenshot the area covering all visible elements in `selectors`."""
-    boxes = []
+    sels = []
     for sel in selectors:
         loc = page.locator(sel).first
         if await loc.count() and await loc.is_visible():
-            await loc.scroll_into_view_if_needed()
-            box = await loc.bounding_box()
-            if box:
-                boxes.append(box)
-    if not boxes:
+            sels.append(sel)
+    if not sels:
         raise RuntimeError(f"{name}: none of {selectors} is visible")
-    # Bounding boxes are viewport-relative; take a full-page shot with a clip.
-    scroll = await page.evaluate("() => [window.scrollX, window.scrollY]")
-    x0 = min(b["x"] for b in boxes) - pad + scroll[0]
-    y0 = min(b["y"] for b in boxes) - pad + scroll[1]
-    x1 = max(b["x"] + b["width"] for b in boxes) + pad + scroll[0]
-    y1 = max(b["y"] + b["height"] for b in boxes) + pad + scroll[1]
-    await page.screenshot(path=str(OUT / f"{name}.png"), full_page=True,
-                          clip={"x": max(0, x0), "y": max(0, y0),
-                                "width": x1 - max(0, x0), "height": y1 - max(0, y0)})
+    # Measure every element in page coordinates in one go, so scrolling
+    # between measurements cannot shift the crop.
+    clip = await page.evaluate(
+        """([sels, pad]) => {
+          const r = sels.map(s => document.querySelector(s).getBoundingClientRect());
+          const x0 = Math.max(0, Math.min(...r.map(e => e.left)) - pad + scrollX);
+          const y0 = Math.max(0, Math.min(...r.map(e => e.top)) - pad + scrollY);
+          const x1 = Math.max(...r.map(e => e.right)) + pad + scrollX;
+          const y1 = Math.max(...r.map(e => e.bottom)) + pad + scrollY;
+          return {x: x0, y: y0, width: x1 - x0, height: y1 - y0};
+        }""", [sels, pad])
+    await page.screenshot(path=str(OUT / f"{name}.png"), full_page=True, clip=clip)
     print(f"saved {name}.png")
 
 
@@ -62,9 +62,10 @@ async def storyboard_1(page, url):
     await shot(page, "s1-1", ["label[for=request]", "#request", "#generate-btn"])
     await page.click("#generate-btn")
     await versions(page, 1)
-    await shot(page, "s1-2", ["#output", "#noticed"])
-    await page.hover("[data-control=simpler]")
-    await page.wait_for_timeout(200)
+    await shot(page, "s1-2", ["#output", "#output-meta"])
+    # Keyboard focus shows the same hint as hovering and keeps it on screen.
+    await page.focus("[data-control=simpler]")
+    await page.wait_for_timeout(300)
     await shot(page, "s1-3", ["#noticed", "#fix-buttons", "#fix-hint"])
     await page.click("[data-control=simpler]")
     await versions(page, 2)

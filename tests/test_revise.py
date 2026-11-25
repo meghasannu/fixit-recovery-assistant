@@ -79,3 +79,9 @@ def test_diff_counts_added_and_removed_words():
 
 def test_diff_reports_unchanged_text():
     assert diff_words("Same text.", "Same text.")["report"]["unchanged"] is True
+
+
+def test_scripted_own_words_correction_in_mock_mode():
+    res = _revise(correction="Use plain words and mention that plants release oxygen")
+    from app.mock_data import CANNED_CORRECTIONS
+    assert res.json()["output"] == CANNED_CORRECTIONS["too-technical"]["output"]

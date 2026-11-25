@@ -1,107 +1,154 @@
 # FixIt: an error-recovery assistant for AI summaries
 
-> Work in progress (Assignment 2, Intelligent Interactive Systems). This README
-> will be completed before submission.
+Prose word count: 859 words (code and commands excluded).
 
-FixIt helps non-expert users recover when an AI-generated summary or
-explanation misses the mark.
+FixIt is a web prototype that helps a student recover when an AI-generated
+summary or explanation misses the mark. It is the Assignment 2 project for
+Intelligent Interactive Systems (University of Birmingham). The report
+explains the design; this README explains how to inspect it.
 
 ## Project status
 
-- **Implemented:** paste text, choose Summarise or Explain, get an AI answer;
-  five correction buttons (Shorter, Simpler, Add example, More detail, Fix
-  missing point) with a preview of what each will change; free-text correction;
-  highlighting of new words (optionally removed words too) with a change report
-  computed by code; version history with authorship labels and undo;
-  **Auto-fix**, which proposes a rewritten request with its diagnosis, changes
-  and assumptions, lets the person edit it, and runs nothing until they approve;
-  **suggested fix**: checks run in code on every answer (length against the
-  request, long words not in the source, requested points left out) and
-  highlight a likely button, which the person can use or dismiss; decline
-  behaviour when a correction asks for something the source does not contain;
-  working indicator; "show what was sent to the model" panel.
-- **Implemented (interface):** step path (paste, get an answer, fix it);
-  "How FixIt works" panel listing what it does, what it can't do, and
-  shortcuts; Copy; keyboard shortcuts (Ctrl+Enter generate, Ctrl+Z undo outside
-  text boxes); "This answer works for me" with a session summary (time to the
-  final answer, fixes by method, undos, suggested fixes used) and a downloadable
-  JSON log of counts and timings (no text is logged or stored); accessibility
-  pass (visible focus, skip link, reduced motion, readable contrast).
-- **Simulated:** three seeded demo failures (too technical, too long, missing
-  the key point). An unchanged demo case always starts from its scripted bad
-  answer, labelled "Seeded demo failure, not written by the model", in mock and
-  live mode, so recovery can be shown on a known failure; with a key, every
-  later step uses the real model. Mock mode also scripts the demo revisions
-  and Auto-fix proposals.
-- **Prompt tests:** `scripts/prompt_tests.py` runs 8 fixed cases (13
-  code-checkable criteria) against the model and saves results in
-  `docs/prompt-tests/`.
+**Implemented**
+
+* Paste a reading, choose Summarise or Explain, state what you need, get an
+answer from Google Gemini.
+* Three recovery routes: five correction buttons (Shorter, Simpler, Add
+example, More detail, Fix missing point) with a preview of each effect;
+free-text correction; Auto-fix, which proposes a rewritten request with its
+diagnosis, changes and assumptions and runs only after approval.
+* "FixIt noticed": checks in code suggest a likely fix but never apply one.
+* New words highlighted; change report computed by code; version history with
+authorship labels; undo that never deletes.
+* Declines corrections that ask for facts missing from the source.
+* Step path, "How FixIt works" panel (including what it can't do), copy,
+keyboard shortcuts, accessibility pass.
+* "This answer works for me" with a session summary and a downloadable JSON
+log of counts and timings (no text is logged or stored).
+* 52 automated tests; a live prompt test runner (8 cases, 13 criteria; 13 of 13
+passed on 2026-11-16).
+
+**Simulated**
+
+* Mock mode (no API key): scripted responses, labelled in the interface.
+* Three seeded demonstration failures. An unchanged demo case always starts
+from its scripted bad answer, labelled "Seeded demo failure, not written by
+the model"; with a key, every later step uses the live model.
+
+**Unfinished (planned)**
+
+* AI-generated correction controls; sentence-to-source links; the
+three-condition user study from Assignment 1 (the session log is built for
+it, but no participants have been tested).
 
 ## Technology stack
 
-- **Backend:** Python, FastAPI (serves the page and makes model calls, so the
-  API key never reaches the browser).
-- **Frontend:** plain HTML, CSS and JavaScript (no build step). Fonts:
-  Atkinson Hyperlegible (interface; designed for low-vision legibility) and
-  Source Serif 4 (reading text), loaded from Google Fonts; system fonts are
-  used when offline.
-- **Model:** Google Gemini via the `google-genai` SDK; model name set in `.env`
-  (default `gemini-3.6-flash`).
-- **Tests:** pytest, always in mock mode.
+|Part|Choice|What it does|
+|-|-|-|
+|Back end|Python, FastAPI, Uvicorn, Pydantic|Serves the page, assembles prompts, calls the model, checks replies|
+|Front end|HTML, CSS, JavaScript (no build step)|The interface and its state (versions, log)|
+|AI model|Google Gemini `gemini-3.6-flash` via `google-genai`|Writes answers, revisions and Auto-fix proposals|
+|Checks and diffs|Python (`difflib`, rules in `app/checks.py`)|Suggested fixes and change reports, without AI|
+|Tests|pytest; Playwright for storyboard capture|Mock-mode tests; scripted browser runs|
+|Fonts|Atkinson Hyperlegible, Source Serif 4 (Google Fonts)|Legible interface; reading text|
 
-## Running it
+Undecided: the model is set in `.env` (`GEMINI\\\\\\\\\\\\\\\_MODEL`) and can be changed if
+Google renames or retires it; no other model has been tested.
 
-Requires Python 3.10 or later.
+## Running or inspecting the work
+
+Requires Python 3.10 or later and Git.
 
 ```bash
+git clone https://github.com/meghasannu/fixit-recovery-assistant.git
+cd fixit-recovery-assistant
 python -m venv .venv
-# Windows: .venv\Scripts\activate    macOS/Linux: source .venv/bin/activate
+# Windows: .venv\\\\\\\\\\\\\\\\Scripts\\\\\\\\\\\\\\\\activate    macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env        # Windows: copy .env.example .env
 uvicorn app.main:app --reload
 ```
 
-Open http://localhost:8000.
+Open http://localhost:8000 and choose a demo case. To repeat a storyboard,
+pick its demo case (Too technical, or Missing point) and follow its frames in
+order.
 
-- **Without a key:** leave `GEMINI_API_KEY` empty in `.env`. The app runs in
-  mock mode (badge in the top right) with canned responses.
-- **With your own key:** create a free key in Google AI Studio and paste it into
-  `.env` as `GEMINI_API_KEY=...`. Never commit `.env`.
-
-Run the tests:
-
-```bash
-pytest
-```
-
-Run the prompt test cases against the live model (needs your key in `.env`):
+* **No key needed to inspect it:** leave `GEMINI\\\\\\\\\\\\\\\_API\\\\\\\\\\\\\\\_KEY` empty and the app runs
+in mock mode.
+* **Live model with your own key:** create a free key in Google AI Studio and
+add `GEMINI\\\\\\\\\\\\\\\_API\\\\\\\\\\\\\\\_KEY=...` to `.env`. No key is included in this repository;
+never commit `.env`.
 
 ```bash
-python -m scripts.prompt_tests            # each case once
-python -m scripts.prompt_tests --repeat 3 # repeat to see run-to-run variation
-```
-
-## Storyboard frames
-
-The storyboard screenshots in the report were captured by driving the running
-app (live model) with a browser script:
-
-```bash
+pytest                                   # 52 tests, mock mode
+python -m scripts.prompt\\\\\\\\\\\\\\\_tests           # live prompt tests (needs a key)
 pip install playwright
-uvicorn app.main:app              # in one terminal
-python -m scripts.capture_storyboards   # in a second terminal
+python -m scripts.capture\\\\\\\\\\\\\\\_storyboards    # storyboard frames (app running)
 ```
 
-Frames are saved to `docs/storyboards/frames/`; the composed storyboards are in
-`docs/storyboards/`. The script uses the installed Microsoft Edge by default
-(`--browser chrome` for Chrome).
+## Development record
+
+Full notes, with what was checked at each step: `docs/development-notes.md`.
+Prompt versions and live test runs: `docs/prompt-log.md` and
+`docs/prompt-tests/`. Significant changes, by stage:
+
+1. **Skeleton.** Back end, mock mode, prompts written as specifications with
+the pasted text marked as information. Change: the working message moved
+onto the clicked button after a browser check showed it off-screen.
+2. **Recovery tools.** Buttons with hints, own words, highlighting, history,
+undo. Change: only new words highlighted by default after full
+strike-through made rewrites unreadable.
+3. **Auto-fix.** Proposal first, run only after approval; JSON reply checked
+in code. Change: suggestion shown once instead of twice.
+4. **Suggested fix and decline.** Change: criteria tightened after false
+alarms on good answers (now 3 of 3 failures flagged, 0 of 6 good answers);
+a new-words warning was dropped.
+5. **Live model.** Seeded demo failures kept in live mode. First live test run
+11 of 13: two cases got no answer (service overloaded). Change: retry and
+clear errors; rerun 13 of 13.
+6. **Interface and session log.** Step path, limits panel, shortcuts,
+accessibility, final-answer summary and log. Change: fixed elements shown
+before any answer existed; storyboard 2 now ends on the summary.
+
+Commit history: https://github.com/meghasannu/fixit-recovery-assistant/commits/main.
+Submitted version: tag `v1.0`
+(https://github.com/meghasannu/fixit-recovery-assistant/tree/v1.0).
+
+## AI assistance
+
+I used **Claude (Anthropic)** throughout, and **Google Gemini** is the model
+inside the app.
+
+* **Code:** I asked Claude to build each stage from my Assignment 1 design. I
+ran the app and the tests after every stage, and used screenshots to check
+the interface. Several of its first versions changed after checking (see the
+development record), for example the suggestion checks, which raised false
+alarms until their criteria were tightened.
+* **Prompts:** Claude drafted the prompt specifications; I ran the live prompt
+tests on Gemini, and the overloaded-service failures led to the retry change.
+* **Report and figures:** Claude drafted the report text, system diagram and
+storyboards from the lecture notes, my Assignment 1 and the running app. I
+checked every claim against the prototype and every reference against its
+source, and edited the text.
+
+## Additional files
+
+None. Everything is in this repository:
+
+* `docs/system-diagram.png`: Figure 1 of the report.
+* `docs/storyboards/storyboard-1.png` to `storyboard-3.png`: Figures 2 to 4.
+The screens in them were captured in mock mode with
+`scripts/capture\\\\\\\\\\\\\\\_storyboards.py`; `docs/storyboards/frames/` holds the
+individual frames.
+* `docs/prompt-tests/`: reports from the live prompt test runs.
 
 ## Project layout
 
 ```
-app/        FastAPI backend: config, prompt specifications, model clients, mock data
+app/        Back end: config, prompts, model clients, checks, diffs, mock data
 static/     Web page: index.html, style.css, app.js
-tests/      Unit and API tests (mock mode)
-scripts/    Prompt test runner (live model)
-docs/       Prompt log, development notes, prompt test results
+tests/      Automated tests (mock mode)
+scripts/    Live prompt tests; storyboard capture
+docs/       Development notes, prompt log, test reports, figures
 ```
+

@@ -260,3 +260,21 @@ AUTOFIX = {
         ),
     },
 }
+
+
+# Scripted own-words correction for the storyboard path "a fix does not help,
+# so the person undoes it and writes their own correction". Used only when the
+# correction contains all the keywords; anything else gets the generic mock.
+CANNED_CORRECTIONS = {
+    "too-technical": {
+        "keywords": ["plain", "oxygen"],
+        "output": (
+            "Plants make their own food using light. A green pigment in their "
+            "leaves, chlorophyll, captures the light, and the plant uses that "
+            "energy to turn carbon dioxide and water into sugar. As this "
+            "happens, plants release oxygen, which is why they matter for the "
+            "air we breathe. More light makes the process faster, but only up "
+            "to a limit."
+        ),
+    },
+}
